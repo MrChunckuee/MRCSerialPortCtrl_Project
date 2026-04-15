@@ -30,7 +30,7 @@ def check_dependencies():
 
 check_dependencies()
 
-# --- 2. IMPORTACIONES TRAS VERIFICACIÓN ---
+# --- 2. IMPORTACIONES ---
 import serial
 import serial.tools.list_ports
 import tkinter as tk
@@ -58,8 +58,8 @@ class SerialPyInterface(tk.Tk):
         self.data_column_name = tk.StringVar(value="DatoRecibidoCompleto") 
         self.csv_column_names = tk.StringVar(value="Col1,Col2,Col3,Col4")
 
-        self.title("MRC SerialPortCtrl")
-        self.geometry('900x850')
+        self.title("MRC SerialPortCtrl - Desconectado")
+        self.geometry('950x850')
         self.create_widgets()
         self.after(100, self.list_ports)
 
@@ -89,22 +89,20 @@ class SerialPyInterface(tk.Tk):
 
         self.log_options_container = ttk.Frame(self.frame_log)
         
-        # Fila 1: Formato y Selecciona Archivo (Posición solicitada)
         ttk.Label(self.log_options_container, text="Formato:").grid(row=0, column=0, padx=5, pady=5)
         ttk.OptionMenu(self.log_options_container, self.export_format, "CSV", "CSV", "Excel").grid(row=0, column=1, padx=5)
         
         self.path_button = ttk.Button(self.log_options_container, text="Seleccionar Archivo", command=self.select_file_path)
         self.path_button.grid(row=0, column=2, padx=10)
 
-        # Fila 2: Títulos de columnas
-        ttk.Label(self.log_options_container, text="Título Dato Completo:").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(self.log_options_container, text="Título Columna:").grid(row=1, column=0, padx=5, pady=5)
         ttk.Entry(self.log_options_container, textvariable=self.data_column_name, width=20).grid(row=1, column=1, padx=5)
 
         ttk.Label(self.log_options_container, text="Sub-Columnas:").grid(row=1, column=2, padx=5)
         ttk.Entry(self.log_options_container, textvariable=self.csv_column_names, width=35).grid(row=1, column=3, padx=5, sticky="ew")
 
         # --- SECCIÓN 3: ENVIAR ---
-        frame_send = ttk.LabelFrame(self, text="Envio de Datos", padding="10")
+        frame_send = ttk.LabelFrame(self, text="Envío de Datos", padding="10")
         frame_send.pack(padx=10, pady=5, fill="x")
         self.send_entry = ttk.Entry(frame_send, state=tk.DISABLED)
         self.send_entry.pack(side="left", fill="x", expand=True, padx=5)
@@ -112,28 +110,41 @@ class SerialPyInterface(tk.Tk):
         self.send_button = ttk.Button(frame_send, text="Enviar", command=self.send_data, state=tk.DISABLED)
         self.send_button.pack(side="left", padx=5)
 
-        # --- SECCIÓN 4: MONITOR ---
+        # --- SECCIÓN 4: MONITOR DE DATOS (CORREGIDA) ---
         self.frame_visual = ttk.LabelFrame(self, text="Monitor de Datos", padding="10")
         self.frame_visual.pack(padx=10, pady=5, fill="both", expand=True)
 
         ctrl_frame = ttk.Frame(self.frame_visual)
-        ctrl_frame.pack(fill="x")
-        ttk.Checkbutton(ctrl_frame, text="Ver Hexadecimal", variable=self.show_hex_var, command=self.refresh_ui_layout).pack(side="left")
+        ctrl_frame.pack(fill="x", pady=(0, 5))
+        
+        # Primero inicializamos el contenedor de paneles (PanedWindow corregido)
+        self.pane_manager = ttk.PanedWindow(self.frame_visual, orient=tk.HORIZONTAL)
+        self.pane_manager.pack(fill="both", expand=True)
+
+        # Checkbutton y Botón Limpiar
+        ttk.Checkbutton(ctrl_frame, text="Ver Hexadecimal", variable=self.show_hex_var, 
+                        command=self.refresh_ui_layout).pack(side="left")
         ttk.Button(ctrl_frame, text="Limpiar Terminal", command=self.clear_terminal).pack(side="right")
 
-        self.panes = ttk.Panedwindow(self.frame_visual, orient=tk.HORIZONTAL)
-        self.panes.pack(fill="both", expand=True)
-
-        self.ascii_frame = ttk.LabelFrame(self.panes, text="ASCII")
-        self.serial_text_ascii = tk.Text(self.ascii_frame, height=12, state='disabled', wrap='none')
+        # Configuración ASCII (Con Wrap y Scrollbar)
+        self.ascii_frame = ttk.LabelFrame(self.pane_manager, text="ASCII")
+        self.serial_text_ascii = tk.Text(self.ascii_frame, height=12, state='disabled', wrap='char')
         self.serial_text_ascii.pack(side="left", fill="both", expand=True)
-        self.panes.add(self.ascii_frame)
+        scroll_ascii = ttk.Scrollbar(self.ascii_frame, command=self.serial_text_ascii.yview)
+        scroll_ascii.pack(side="right", fill="y")
+        self.serial_text_ascii.config(yscrollcommand=scroll_ascii.set)
+        self.pane_manager.add(self.ascii_frame)
 
-        self.hex_frame = ttk.LabelFrame(self.panes, text="Hexadecimal")
-        self.serial_text_hex = tk.Text(self.hex_frame, height=12, state='disabled', wrap='none', fg="blue")
+        # Configuración Hexadecimal (Con Wrap y Scrollbar)
+        self.hex_frame = ttk.LabelFrame(self.pane_manager, text="Hexadecimal")
+        self.serial_text_hex = tk.Text(self.hex_frame, height=12, state='disabled', wrap='char', fg="blue")
         self.serial_text_hex.pack(side="left", fill="both", expand=True)
-        self.panes.add(self.hex_frame)
+        scroll_hex = ttk.Scrollbar(self.hex_frame, command=self.serial_text_hex.yview)
+        scroll_hex.pack(side="right", fill="y")
+        self.serial_text_hex.config(yscrollcommand=scroll_hex.set)
+        self.pane_manager.add(self.hex_frame)
 
+    # --- LÓGICA DE ARCHIVOS ---
     def select_file_path(self):
         fmt = self.export_format.get()
         ext = ".csv" if fmt == "CSV" else ".xlsx"
@@ -142,11 +153,11 @@ class SerialPyInterface(tk.Tk):
                                             filetypes=[("Archivos de datos", f"*{ext}")])
         if path:
             self.file_path = path
-            self.path_button.config(text="✔ Archivo Listo")
+            self.path_button.config(text="✔ Archivo Seleccionado")
 
     def toggle_log_options(self):
         if self.enable_log_var.get():
-            self.log_options_container.grid(row=1, column=0, columnspan=4, sticky="ew", pady=5)
+            self.log_options_container.grid(row=2, column=0, columnspan=4, sticky="ew", pady=5)
         else:
             self.log_options_container.grid_forget()
 
@@ -173,27 +184,31 @@ class SerialPyInterface(tk.Tk):
             final_df = pd.concat([df[['Timestamp']], vals_df, df[['Raw']]], axis=1)
             final_df.rename(columns={'Raw': self.data_column_name.get()}, inplace=True)
             final_df.to_excel(self.file_path, index=False)
-            messagebox.showinfo("Excel", "Guardado exitosamente.")
+            messagebox.showinfo("Excel", "Registro guardado exitosamente.")
             self.data_history = []
         except Exception as e:
-            messagebox.showerror("Error Excel", f"Error al guardar: {str(e)}")
+            messagebox.showerror("Error Excel", f"No se pudo guardar: {str(e)}")
 
+    # --- LÓGICA SERIAL ---
     def toggle_connection(self):
         if self.serial_object and self.serial_object.is_open:
-            self.disconnect()
+            self.disconnect(silent=False)
         else:
             self.connect()
 
     def connect(self):
         if self.enable_log_var.get():
-            if not self.file_path: return messagebox.showwarning("Archivo", "Selecciona un archivo.")
+            if not self.file_path: return messagebox.showwarning("Archivo", "Por favor seleccione un archivo para guardar.")
             if self.export_format.get() == "CSV": self.setup_csv_file()
         try:
-            self.serial_object = serial.Serial(self.port_combobox.get(), int(self.baud_combobox.get()), timeout=0.1)
+            port = self.port_combobox.get()
+            self.serial_object = serial.Serial(port, int(self.baud_combobox.get()), timeout=0.1)
             self.stop_event.clear()
             self.update_ui_state(True)
             threading.Thread(target=self.receive_thread, daemon=True).start()
-        except Exception as e: messagebox.showerror("Error", str(e))
+            messagebox.showinfo("Conectado", f"Conectado exitosamente a {port}")
+        except Exception as e: 
+            messagebox.showerror("Error", f"Fallo al conectar: {e}")
 
     def disconnect(self, silent=True):
         self.stop_event.set()
@@ -201,26 +216,32 @@ class SerialPyInterface(tk.Tk):
         if self.enable_log_var.get() and self.export_format.get() == "Excel" and self.data_history: self.save_excel_file()
         if self.csv_file: self.csv_file.close(); self.csv_file = None
         self.update_ui_state(False)
+        if not silent:
+            messagebox.showinfo("Desconectado", "La conexión serial ha sido cerrada.")
 
     def receive_thread(self):
         while not self.stop_event.is_set():
             try:
-                if self.serial_object.in_waiting > 0:
+                if self.serial_object and self.serial_object.in_waiting > 0:
                     data = self.serial_object.read(self.serial_object.in_waiting).decode('utf-8', errors='replace')
                     self.buffer += data
                     while '\n' in self.buffer:
                         line, self.buffer = self.buffer.split('\n', 1)
                         self.after(0, self.process_line, line.strip())
-            except: self.after(0, lambda: self.disconnect(silent=False)); break
+            except: 
+                self.after(0, lambda: self.disconnect(silent=True))
+                break
             time.sleep(0.01)
 
     def process_line(self, line):
         if not line: return
         ts = time.strftime("%H:%M:%S")
         self.update_terminal(self.serial_text_ascii, f"[{ts}] {line}\n")
+        
         if self.show_hex_var.get():
             h_line = ' '.join([f'{ord(c):02X}' for c in line])
             self.update_terminal(self.serial_text_hex, f"[{ts}] {h_line}\n")
+            
         if self.enable_log_var.get():
             nums = self.extract_numbers(line)
             if self.export_format.get() == "CSV" and self.csv_writer:
@@ -257,10 +278,12 @@ class SerialPyInterface(tk.Tk):
         widget.config(state='normal'); widget.insert('end', text); widget.see('end'); widget.config(state='disabled')
 
     def refresh_ui_layout(self):
+        """Muestra u oculta el panel hexadecimal usando PanedWindow."""
         if self.show_hex_var.get():
-            if str(self.hex_frame) not in self.panes.panes(): self.panes.add(self.hex_frame)
+            if self.hex_frame not in self.pane_manager.panes():
+                self.pane_manager.add(self.hex_frame)
         else:
-            if str(self.hex_frame) in self.panes.panes(): self.panes.forget(self.hex_frame)
+            self.pane_manager.forget(self.hex_frame)
 
     def list_ports(self):
         ports = serial.tools.list_ports.comports()
