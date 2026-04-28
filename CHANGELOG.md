@@ -40,7 +40,7 @@ Author:	Pedro Sánchez (@mrchunckuee_electronics)
 
 ***
 
-## 02/06/2020 _v1.0.0_
+## 01/06/2019 _v1.0.0_
 Author:	Pedro Sánchez (@mrchunckuee_electronics)
 ### Notes
 - Creacion del proyecto.
