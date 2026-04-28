@@ -1,6 +1,5 @@
 # MRCSerialPortCtrl Project
 
-
 FileName:        MRCSerialPortCtrl.py <br>
 Author:          Pedro Sánchez (@mrchunckuee_electronics) <br>
 Blog:            http://mrchunckuee.blogspot.com/ <br>
@@ -24,7 +23,33 @@ Author:	Full Name
 
 ***
 
+## 12/09/2025 _v2.3.0_
+Author:	Pedro Sánchez (@mrchunckuee_electronics)
+### Added
+- Checkbox to enable/disable hexadecimal data. An option has been added to select how to view the data: hexadecimal or ASCII.
+- Option to clear the terminal. You can delete all received data with this button.
+- The data sending option now includes a feature that sends data when the ENTER key is pressed.
+- A small routine has been added at startup to test if the libraries are installed. If they are not, it will suggest how to install them.
+### Changed
+- Option to export to CSV or Excel. This feature was already implemented in a previous update, but in this version it has been unified to provide a single file with these capabilities.
 
+
+
+
+<br>
+<br>
+
+***
+## 12/09/2025 _v2.1.0_
+Author:	Pedro Sánchez (@mrchunckuee_electronics)
+### Changed
+- La opción para exportar datos a un archivo Excel o CSV (he estado probando mas el CSV y ha trabajado de forma adecuada), debo aclarar que he decidido dejar estos cambios en archivos separados asi se puede usar el que mejor se ajuste a tu aplicación.
+- Se agrego la sección de "Configuración de Archivo" en donde nos permite introducir el nombre de las columnas y seleccionar la ruta donde se almacenara el archivos (los pasos de siempre, seleccionar ubicación y nombre), es importante este paso para que los datos sean almacenados en el archivo adecuadamente.
+
+<br>
+<br>
+
+***
 ## 12/09/2025 _v2.0.0_
 Author:	Pedro Sánchez (@mrchunckuee_electronics)
 ### Changed
