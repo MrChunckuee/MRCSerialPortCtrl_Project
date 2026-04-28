@@ -18,7 +18,7 @@ This project requires Python 3.x and the following libraries:
    pip install pyserial pandas openpyxl
 
 3. Run the application:
-   python main.py
+   python MRCSerialPortCtrl.py
 
 ##  Usage & GUI Overview
 The application is structured to be plug-and-play:
